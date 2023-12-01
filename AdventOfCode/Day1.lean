@@ -17,7 +17,7 @@ a1b2c3d4e5f
 treb7uchet
 "
 
-def nums_from_first_and_last_digit (lines : List String) : List (Option Nat) :=
+def numsFromFirstLastDigit (lines : List String) : List (Option Nat) :=
     let digits_perline := lines.map ((List.filter (Char.isDigit)) ∘ String.data)
     let first := digits_perline.map (List.get? · 0)
     let last := digits_perline.map (fun chars ↦
@@ -29,10 +29,10 @@ def nums_from_first_and_last_digit (lines : List String) : List (Option Nat) :=
     )
 
 def result : Option Nat := do
-    let nums := input |> splitLines |> nums_from_first_and_last_digit
+    let nums := input |> splitLines |> numsFromFirstLastDigit
     (←nums.allSome).sum
 
-#eval result
+#guard result == some 142
 
 
 -- part 2
@@ -47,7 +47,7 @@ zoneight234
 7pqrstsixteen
 "
 
-def parsenum_fromstart (s : String) : Option Nat := do
+def parsenumFromstart (s : String) : Option Nat := do
     let c0 := ←(s.get? 0)
     if c0.isDigit then
         c0.toString.toNat?
@@ -66,27 +66,23 @@ def parsenum_fromstart (s : String) : Option Nat := do
 def firstNum (s : String) : Option Nat := do
     for i in [0:s.length] do
         let stopPos := s.length
-        let parsed := parsenum_fromstart (s.extract ⟨i⟩ ⟨stopPos⟩)
+        let parsed := parsenumFromstart (s.extract ⟨i⟩ ⟨stopPos⟩)
         if parsed.isSome then return (←parsed)
     failure
 
 def lastNum (s : String) : Option Nat := do
     for i in [0:s.length+1] do
         let startPos := s.length - i
-        let parsed := parsenum_fromstart (s.extract ⟨startPos⟩ ⟨s.length⟩)
+        let parsed := parsenumFromstart (s.extract ⟨startPos⟩ ⟨s.length⟩)
         if parsed.isSome then return (←parsed)
     failure
 
 def twodigitNum (s : String) : Option Nat := do (←firstNum s) * 10 + (←lastNum s)
 
-def nums_from_first_and_last_digit_allowwords (lines : List String) : Option Nat
+def sumFirstLastTwodigit (lines : List String) : Option Nat
     := do
     let nums := (lines.map twodigitNum).allSome
     (←nums).sum
 
-
-def resultpart2 : Option Nat := do
-    let nums := input |> splitLines |> nums_from_first_and_last_digit
-    (←nums.allSome).sum
-
-#eval inputpart2 |> splitLines |> nums_from_first_and_last_digit_allowwords
+#guard (inputpart2 |> splitLines |> sumFirstLastTwodigit)
+        == pure 281
