@@ -10,7 +10,6 @@ def splitLines (s : String) : List String
 
 namespace Day2 -- ================================================== Day 2
 
-
 structure Bag where
     red : ℕ
     green : ℕ
@@ -123,7 +122,6 @@ def parseLine (s : String) : Option (ℕ × List Bag)
             | some currBag => bags := currBag :: bags
         return some (gameN, [])
 
-
 def bagTotal : Bag := ⟨12, 13, 14⟩
 
 def Bag.isPossible (b : Bag) : Bool := b ⊆ bagTotal
@@ -154,6 +152,7 @@ def result : ℕ :=
 
 def Bag.power (b : Bag) : ℕ := b.red * b.green * b.blue
 
+/- Infer minimum numbers of cubes in bag given two shown subsets (take max of cube counts)-/
 def Bag.inter (b1 b2 : Bag) : Bag :=
         {red:=max b1.red b2.red, green:=max b1.green b2.green, blue:=max b1.blue b2.blue}
 
@@ -162,10 +161,8 @@ def result2 (input : String) : Option ℕ
     let allGames ← ((input |> splitLines).map parseLine).allSome
     let minimalBags ← (allGames.map (fun idxBag ↦ do
         let bags := idxBag.2
-        let bag0 ← bags.get? 0
-        some (bags.foldl Bag.inter bag0)
+        some (bags.foldl Bag.inter ⟨0,0,0⟩)
         )).allSome
     pure (minimalBags.map Bag.power).sum
-
 
 #guard result2 input == some 2286
