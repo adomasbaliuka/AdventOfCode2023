@@ -1,4 +1,4 @@
-import Mathlib.Tactic
+import Std.Data.String.Basic
 
 -- =============================================================== helpers
 
@@ -30,7 +30,7 @@ def numsFromFirstLastDigit (lines : List String) : List (Option Nat) :=
 
 def result : Option Nat := do
     let nums := input |> splitLines |> numsFromFirstLastDigit
-    (←nums.allSome).sum
+    Nat.sum (←nums.allSome)
 
 #guard result == some 142
 
@@ -82,7 +82,7 @@ def twodigitNum (s : String) : Option Nat := do (←firstNum s) * 10 + (←lastN
 def sumFirstLastTwodigit (lines : List String) : Option Nat
     := do
     let nums := (lines.map twodigitNum).allSome
-    (←nums).sum
+    Nat.sum (←nums)
 
 #guard (inputpart2 |> splitLines |> sumFirstLastTwodigit)
         == pure 281

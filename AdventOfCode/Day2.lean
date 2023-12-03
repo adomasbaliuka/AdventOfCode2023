@@ -1,4 +1,4 @@
-import Mathlib.Tactic
+import Std.Data.String.Basic
 -- =============================================================== helpers
 
 def splitLines (s : String) : List String
@@ -7,14 +7,13 @@ def splitLines (s : String) : List String
     let s := s.stripSuffix "\n"
     s.splitOn "\n"
 
-
 namespace Day2 -- ================================================== Day 2
 
 structure Bag where
-    red : ℕ
-    green : ℕ
-    blue : ℕ
-deriving DecidableEq, Repr, Inhabited
+    red : Nat
+    green : Nat
+    blue : Nat
+deriving Repr
 
 instance instToStringBag : ToString Bag where
     toString := fun b ↦ s!"({b.red}, {b.green}, {b.blue})"
@@ -23,7 +22,7 @@ inductive Color
 | Red
 | Green
 | Blue
-deriving DecidableEq, Repr, Fintype, Inhabited
+deriving DecidableEq, Repr, Inhabited
 open Color
 
 /-
@@ -44,7 +43,7 @@ instance instDecidableHasSubsetBag (lhs rhs : Bag) : Decidable (lhs ⊆ rhs) := 
 
 /- Parse first natural number from start of string.
 Return unparsed rest of string.-/
-def parseNatEat (s : String) : (Option ℕ) × String :=
+def parseNatEat (s : String) : (Option Nat) × String :=
     let firstNondigitIdx := Id.run do
         for i in [0:s.length] do
             if !Char.isDigit (s.get ⟨i⟩) then return i
@@ -78,7 +77,7 @@ def parseNatColorEat (s_ : String) : (Option (Nat × Color)) × String :=
     | some n, some color => ((some (n, color)), s)
     | _, _ => (none, s_)
 
-def Bag.update (b : Bag) (data : ℕ × Color) : Bag :=
+def Bag.update (b : Bag) (data : Nat × Color) : Bag :=
     match data.2 with
     | Red => {red:=data.1, green:=b.green, blue:=b.blue}
     | Green => {red:=b.red, green:=data.1, blue:=b.blue}
@@ -102,7 +101,7 @@ def parseBagEat (s_ : String) : (Option Bag) × String :=
             | some valColor =>
                 ⟨bag.update valColor, s⟩
 
-def parseLine (s : String) : Option (ℕ × List Bag)
+def parseLine (s : String) : Option (Nat × List Bag)
 := do
     let start := s.extract ⟨0⟩ ⟨5⟩
     if start != "Game " then none else
@@ -136,33 +135,33 @@ Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 "
 
-def result : ℕ :=
+def result : Nat :=
     let allGames := (input |> splitLines).map parseLine
     let possibleGameIdsToSum := allGames.map
         (fun idBags? ↦
             match idBags? with
             | none => 0 -- summing zero later is like dropping them
             | some ⟨id, bags⟩ => if isPossible bags then id else 0)
-    possibleGameIdsToSum.sum
+    Nat.sum possibleGameIdsToSum
 
 
 #guard result == 8
 
 -- part 2
 
-def Bag.power (b : Bag) : ℕ := b.red * b.green * b.blue
+def Bag.power (b : Bag) : Nat := b.red * b.green * b.blue
 
 /- Infer minimum numbers of cubes in bag given two shown subsets (take max of cube counts)-/
 def Bag.inter (b1 b2 : Bag) : Bag :=
         {red:=max b1.red b2.red, green:=max b1.green b2.green, blue:=max b1.blue b2.blue}
 
-def result2 (input : String) : Option ℕ
+def result2 (input : String) : Option Nat
 := do
     let allGames ← ((input |> splitLines).map parseLine).allSome
     let minimalBags ← (allGames.map (fun idxBag ↦ do
         let bags := idxBag.2
         some (bags.foldl Bag.inter ⟨0,0,0⟩)
         )).allSome
-    pure (minimalBags.map Bag.power).sum
+    pure $ Nat.sum (minimalBags.map Bag.power)
 
 #guard result2 input == some 2286
