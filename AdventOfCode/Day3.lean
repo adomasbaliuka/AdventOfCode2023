@@ -27,6 +27,7 @@ namespace Day3 -- ================================================== Day 3
 structure Symbol where
 x : Nat
 y : Nat
+isStar : Bool
 deriving Repr, BEq
 
 structure Number where
@@ -63,7 +64,7 @@ Id.run do
         let obj? : Option Obj := do some (Obj.Num (←num))
         return (obj?, s')
     -- Symbol
-    let symbol : Symbol := ⟨s.i.byteIdx, lineIdx⟩
+    let symbol : Symbol := ⟨s.i.byteIdx, lineIdx, c == '*'⟩
     let symbol' : Option Obj := do some (Obj.Symbol symbol)
     return (symbol', s.next)
 
@@ -104,12 +105,22 @@ def Obj.isNum : Obj → Bool
     | .Num _ => true
     | _ => false
 
+def Obj.isStar : Obj → Bool
+    | .Symbol s => s.isStar
+    | _ => false
+
+
 def l1 := parseLine 0 "467..114.."
 def l2 := parseLine 1 "...*......"
 
 def Obj.num : Obj → Nat
     | .Num n => n.n
     | _ => 0
+
+def Obj.numO : Obj → Option Number
+    | .Num n => some n
+    | _ => none
+
 
 def input := "
 467..114..
@@ -124,13 +135,13 @@ def input := "
 .664.598..
 "
 
-def result (input : String) : Nat :=
+def partNumbers (input : String) : List Number :=
     let lines := input |> splitLines
     Id.run do
-        let mut result : Nat := 0
+        let mut partNumbers : List Number := []
         for i in [0:lines.length] do
             let prevL := if i > 0 then lines.get! (i-1) else ""
-            let currL := lines.get! i
+            let currL := lines.get! i    -- TODO not nice!
             let nextL :=  if i + 1 < lines.length then lines.get! (i+1) else ""
             let nums := (parseLine i currL).filter Obj.isNum
             let surrObjs := (parseLine (i-1) prevL)
@@ -138,14 +149,41 @@ def result (input : String) : Nat :=
                 ++ (parseLine (i+1) nextL)
             let partNumObjs := nums.filter (fun num ↦
                 isAnySymbolAdjacent surrObjs num)
-            dbg_trace s!"{partNumObjs}"
-            result := result + (partNumObjs.map Obj.num).sum
-        return result
+            let newPartNumbers := (partNumObjs.map Obj.numO).allSome
+            match newPartNumbers with
+            | some L => partNumbers := L ++ partNumbers
+            | none => ()
+        return partNumbers
 
+
+def result (input : String) : Nat := ((partNumbers input).map Number.n).sum
 
 #guard result input == 4361
 
 
 -- part 2
 
+def filterStars (l : List Obj) : List Symbol := do
+    match (←l) with
+    | .Symbol s => if s.isStar then [s] else []
+    | _ => []
 
+
+def result2 (input : String) : Nat :=
+    let lines := input |> splitLines
+    let partNumbers := partNumbers input
+    Id.run do
+        let mut result : Nat := 0
+        for i in [0:lines.length] do
+            let currL := lines.get! i  -- TODO not nice!
+            let stars := filterStars (parseLine i currL)
+            let gearRatios : List Nat := stars.map (fun s ↦
+                let adjPartNums := partNumbers.filter (Symbol.isAdjacent s ·)
+                match adjPartNums with
+                | [pn1, pn2] => pn1.n * pn2.n
+                | _ => 0
+                )
+            result := result + gearRatios.sum
+        return result
+
+#guard result2 input == 467835
