@@ -1,6 +1,4 @@
-import Mathlib.Tactic -- not actually using Mathlib. TODO fix imports
-
-open System Lean
+import Std.Data.String.Basic
 
 -- =============================================================== helpers
 
@@ -12,8 +10,8 @@ def splitLines (s : String) : List String
 
 -- This is now basically a `Lean.Parsec`. Will use `Parsec` in next day maybe...
 /- Parse one natural number from position.-/
-def parseNat (s : String.Iterator) : (Option ℕ) × String.Iterator :=
-    let firstNondigitIdx : ℕ := Id.run do
+def parseNat (s : String.Iterator) : (Option Nat) × String.Iterator :=
+    let firstNondigitIdx : Nat := Id.run do
         for i in [s.i.byteIdx : s.s.length] do
             if !Char.isDigit (s.s.get ⟨i⟩) then return i
         return s.s.length
@@ -68,11 +66,8 @@ Id.run do
     let symbol' : Option Obj := do some (Obj.Symbol symbol)
     return (symbol', s.next)
 
--- set_option trace.Meta.synthInstance true in
--- #eval (parseObj "asdf".iter (99)).2 |> (parseObj · 5)
-
 def Symbol.isAdjacent (s : Symbol) (n : Number) : Bool :=
-    |(s.y : ℤ) - n.y| ≤ 1
+    Int.natAbs ((s.y : Int) - n.y) ≤ 1
     ∧ s.x ≤ n.endx
     ∧ s.x + 1 ≥ n.startx
 
@@ -85,7 +80,7 @@ def isAnySymbolAdjacent (ss : List Obj) (n : Obj) : Bool :=
         )
     | _ => false
 
-def parseLine (lineIdx : ℕ) (s : String) : List Obj := Id.run do
+def parseLine (lineIdx : Nat) (s : String) : List Obj := Id.run do
     let mut result : List Obj := []
     let mut sIt : String.Iterator := s.iter
     for _ in [0:s.length] do -- trivial upper bound
@@ -109,7 +104,6 @@ def Obj.isStar : Obj → Bool
     | .Symbol s => s.isStar
     | _ => false
 
-
 def l1 := parseLine 0 "467..114.."
 def l2 := parseLine 1 "...*......"
 
@@ -120,20 +114,6 @@ def Obj.num : Obj → Nat
 def Obj.numO : Obj → Option Number
     | .Num n => some n
     | _ => none
-
-
-def input := "
-467..114..
-...*......
-..35..633.
-......#...
-617*......
-.....+.58.
-..592.....
-......755.
-...$.*....
-.664.598..
-"
 
 def partNumbers (input : String) : List Number :=
     let lines := input |> splitLines
@@ -155,19 +135,31 @@ def partNumbers (input : String) : List Number :=
             | none => ()
         return partNumbers
 
+def result (input : String) : Nat := Nat.sum ((partNumbers input).map Number.n)
 
-def result (input : String) : Nat := ((partNumbers input).map Number.n).sum
+def input := "
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+"
 
 #guard result input == 4361
 
-
 -- part 2
 
-def filterStars (l : List Obj) : List Symbol := do
-    match (←l) with
-    | .Symbol s => if s.isStar then [s] else []
-    | _ => []
-
+def filterStars (l : List Obj) : List Symbol :=
+    List.join <| l.map (fun obj ↦
+        match obj with
+        | .Symbol s => [s]
+        | _ => []
+    )
 
 def result2 (input : String) : Nat :=
     let lines := input |> splitLines
@@ -183,7 +175,7 @@ def result2 (input : String) : Nat :=
                 | [pn1, pn2] => pn1.n * pn2.n
                 | _ => 0
                 )
-            result := result + gearRatios.sum
+            result := result + Nat.sum gearRatios
         return result
 
 #guard result2 input == 467835
